@@ -1,5 +1,6 @@
 module Formatter
 import Parser
+import Utils
 import Data.String
 
 %default total
@@ -49,12 +50,13 @@ PrintFType (Number    :: fmt)   = (i : Int)    -> PrintFType fmt
 PrintFType (Percent   :: fmt)   = PrintFType fmt
 PrintFType ((Lit s)   :: fmt)   = PrintFType fmt
 
-
 public export
 format : (fmt: List Format) -> (acc : String) -> PrintFType fmt
 format [] acc                     = acc
 format (Number :: xs) acc         = \i => format xs (acc ++ show i)
-format ((Doubl x) :: xs) acc      = \i => format xs (acc ++ show i)
+format ((Doubl len) :: xs) acc    = \i => case len of
+                                               Nothing => format xs (acc ++ show i)
+                                               (Just l) => format xs (acc ++ show (round l i))
 format (Percent :: xs) acc        = format xs (acc ++ "%")
 format ((Lit s) :: xs) acc        = format xs (acc ++ s)
 
@@ -65,5 +67,6 @@ printf fmt = format _ ""
 
 partial
 main : IO ()
-main = do putStrLn $ printf "%% %f" 1.0000000000001
+-- main = putStrLn $ show $ round (5) (1111.000137)
+main = do putStrLn $ printf "%d %f.1" 1 2.45
 -- main = putStrLn $ show $ ParseFull ToFormat "%% %d"
