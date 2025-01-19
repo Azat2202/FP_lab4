@@ -31,16 +31,16 @@ ToFormat = fdouble <|> fnumber <|> fstring <|> fcharacter <|> fpercent
         rightBound = maybe $ char '.' ~> nat 
 
         fdouble : Parser Format
-        fdouble = map (Doubl) $ char '%' ~> char 'f' ~> rightBound
+        fdouble = map (Doubl) $ string "%f" ~> rightBound
 
         fnumber : Parser Format
-        fnumber = char '%' ~> char 'd' ~> pure Number
+        fnumber = string "%d" ~> pure Number
 
         fstring : Parser Format
-        fstring = char '%' ~> char 's' ~> pure Str
+        fstring = string "%s" ~> pure Str
 
         fpercent : Parser Format 
-        fpercent = char '%' ~> char '%' >>= \_ => pure Percent 
+        fpercent = string "%%" >>= \_ => pure Percent 
 
         fcharacter : Parser Format
         fcharacter = do s <- some $ sat (/= '%')

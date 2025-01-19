@@ -5,6 +5,7 @@ import Utils
 import Data.List
 import System
 
+partial
 tests : List (String, String)
 tests = [
     ((format "_%d_"      1),         "_1_"),
@@ -18,6 +19,7 @@ tests = [
     ((format "%s, %s!"    "Hello" "world"), "Hello, world!")
 ]
 
+partial
 main : IO ()
 main = do let run = map (\(a, b) => a == b) tests
           let failed = findIndices (not) run
