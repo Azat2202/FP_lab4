@@ -10,6 +10,7 @@ data Format : Type where
     Doubl : Maybe Nat -> Format
     Number : Format
     Percent : Format
+    Str : Format
     Lit : String -> Format
 
 public export
@@ -17,12 +18,13 @@ Show Format where
     show (Doubl l) = "double (" ++ show l ++ ")"
     show Number    = "num"
     show Percent   = "%"
+    show Str       = "str" 
     show (Lit s)   = s
 
 partial
 public export
 ToFormat : Parser Format
-ToFormat = fdouble <|> fnumber <|> fcharacter <|> fpercent
+ToFormat = fdouble <|> fnumber <|> fstring <|> fcharacter <|> fpercent
 
         where
         rightBound : Parser (Maybe Nat)
@@ -34,6 +36,9 @@ ToFormat = fdouble <|> fnumber <|> fcharacter <|> fpercent
         fnumber : Parser Format
         fnumber = char '%' ~> char 'd' ~> pure Number
 
+        fstring : Parser Format
+        fstring = char '%' ~> char 's' ~> pure Str
+
         fpercent : Parser Format 
         fpercent = char '%' ~> char '%' >>= \_ => pure Percent 
 
@@ -43,30 +48,30 @@ ToFormat = fdouble <|> fnumber <|> fcharacter <|> fpercent
 
 
 public export
-PrintFType : List Format -> Type
-PrintFType [] = String
-PrintFType ((Doubl a) :: fmt)   = (i : Double) -> PrintFType fmt
-PrintFType (Number    :: fmt)   = (i : Int)    -> PrintFType fmt
-PrintFType (Percent   :: fmt)   = PrintFType fmt
-PrintFType ((Lit s)   :: fmt)   = PrintFType fmt
+Format2Type : List Format -> Type
+Format2Type [] = String
+Format2Type ((Doubl a) :: fmt)   = (i : Double) -> Format2Type fmt
+Format2Type (Number    :: fmt)   = (i : Int)    -> Format2Type fmt
+Format2Type (Str       :: fmt)   = (i : String) -> Format2Type fmt
+Format2Type (Percent   :: fmt)   = Format2Type fmt
+Format2Type ((Lit s)   :: fmt)   = Format2Type fmt
 
 public export
-format : (fmt: List Format) -> (acc : String) -> PrintFType fmt
-format [] acc                     = acc
-format (Number :: xs) acc         = \i => format xs (acc ++ show i)
-format ((Doubl len) :: xs) acc    = \i => case len of
-                                               Nothing => format xs (acc ++ show i)
-                                               (Just l) => format xs (acc ++ show (round l i))
-format (Percent :: xs) acc        = format xs (acc ++ "%")
-format ((Lit s) :: xs) acc        = format xs (acc ++ s)
+formatBuild : (fmt: List Format) -> (acc : String) -> Format2Type fmt
+formatBuild [] acc                     = acc
+formatBuild (Number :: xs) acc         = \i => formatBuild xs (acc ++ show i)
+formatBuild (Str    :: xs) acc         = \i => formatBuild xs (acc ++ i)
+formatBuild ((Doubl len) :: xs) acc    = \i => case len of
+                                               Nothing => formatBuild xs (acc ++ show i)
+                                               (Just l) => formatBuild xs (acc ++ show (round l i))
+formatBuild (Percent :: xs) acc        = formatBuild xs (acc ++ "%")
+formatBuild ((Lit s) :: xs) acc        = formatBuild xs (acc ++ s)
 
 public export
 partial
-printf : (fmt : String) -> PrintFType (ParseFull ToFormat fmt)
-printf fmt = format _ ""
+format : (fmt : String) -> Format2Type (ParseFull ToFormat fmt)
+format fmt = formatBuild _ ""
 
 partial
 main : IO ()
--- main = putStrLn $ show $ round (5) (1111.000137)
-main = do putStrLn $ printf "%d %f.1" 1 2.45
--- main = putStrLn $ show $ ParseFull ToFormat "%% %d"
+main = do putStrLn $ format "_%s_%f.1" "hello" 1.23

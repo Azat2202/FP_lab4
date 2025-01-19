@@ -1,4 +1,4 @@
-package FP_lab4-test
+package FP_lab4_test
 version = 0.1.0
 authors = "azat222"
 -- maintainers =
@@ -19,10 +19,10 @@ depends = FP_lab4
 -- modules =
 
 -- main file (i.e. file to load at REPL)
-main = Main
+main = Tests
 
 -- name of executable
-executable = "FP_lab4-test"
+executable = "FP_lab4_test"
 -- opts =
 sourcedir = "src"
 -- builddir =
